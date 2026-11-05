@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8f4">
+<title>桃小巴地圖｜路線・站點・時刻表</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+:root{--ink:#172c29;--muted:#697a74;--paper:#f7f8f4;--panel:#fff;--green:#176b55;--lime:#d7f36b;--line:#e4e9e2;--shadow:0 12px 36px #173b2b12}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,"Noto Sans TC",system-ui,-apple-system,sans-serif}
+a{color:inherit}button,input,select{font:inherit}button{cursor:pointer}
+.topbar{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,56px);background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:850;letter-spacing:-.04em;font-size:20px}.logo{width:38px;height:38px;border-radius:12px;background:var(--green);color:var(--lime);display:grid;place-items:center;font-size:20px}
+.toplinks{display:flex;gap:22px;align-items:center;color:var(--muted);font-size:13px}.toplinks a{text-decoration:none}.official{background:var(--green);color:white;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700}
+.hero{padding:34px clamp(16px,4vw,56px) 26px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;background:linear-gradient(115deg,#f7f8f4 50%,#eaf2e7)}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--green);text-transform:uppercase;display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;background:#8eb72b;border-radius:50%}
+h1{font-size:clamp(31px,4vw,48px);letter-spacing:-.055em;line-height:1.08;margin:13px 0 10px} .hero p{margin:0;color:var(--muted);max-width:650px;font-size:14px}
+.hero-stats{display:flex;gap:10px}.stat{padding:13px 16px;background:#ffffffbd;border:1px solid #e2e9df;border-radius:14px;min-width:105px}.stat b{font-size:23px;display:block;letter-spacing:-.04em}.stat span{font-size:11px;color:var(--muted)}
+main{padding:22px clamp(12px,3vw,40px) 38px}.workspace{display:grid;grid-template-columns:minmax(300px,370px) minmax(0,1fr);gap:18px;align-items:stretch}
+.sidebar,.map-panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.sidebar{display:flex;flex-direction:column;min-height:650px}.side-head{padding:20px 18px 14px;border-bottom:1px solid var(--line)}.section-title{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:17px}.pill{background:#eef5e9;color:#47733a;font-size:11px;padding:4px 8px;border-radius:20px;font-weight:800}
+.search{margin-top:14px;display:flex;gap:8px;align-items:center;background:#f5f7f3;border:1px solid #e3e9e1;border-radius:11px;padding:0 11px}.search input{width:100%;padding:12px 0;border:0;outline:0;background:transparent}.filters{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.filter{border:1px solid var(--line);background:white;border-radius:9px;padding:7px 10px;font-size:12px;color:var(--muted)}.filter.active{background:var(--green);border-color:var(--green);color:white}
+.route-list{padding:8px;overflow:auto;max-height:570px}.route-card{padding:13px 12px;border:1px solid transparent;border-radius:13px;display:grid;grid-template-columns:20px 40px 1fr auto;gap:8px;align-items:center;cursor:pointer}.route-toggle{width:16px;height:16px;accent-color:var(--green);cursor:pointer}.route-card.disabled-route{opacity:.55}.route-card:hover{background:#f7f9f5}.route-card.selected{background:#f0f6e9;border-color:#d7e7c6}.route-badge{height:40px;min-width:40px;padding:0 4px;border-radius:11px;background:#e6f1e9;color:var(--green);display:grid;place-items:center;font-weight:900;font-size:12px}.route-name{font-weight:750;font-size:13px;line-height:1.35}.route-meta{color:var(--muted);font-size:11px;margin-top:4px}.arrow{color:#91a098;font-size:19px}
+.map-panel{min-height:650px;position:relative;display:flex;flex-direction:column}.map-head{padding:17px 20px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line)}.map-head strong{font-size:15px}.map-head small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.map-actions{display:flex;gap:7px;flex-wrap:wrap}.nearby-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:#fbfcf9}.nearby-tools input,.nearby-tools select{border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 10px;min-width:0}.nearby-tools input{flex:1;min-width:145px}.nearby-tools button{border:0;background:var(--green);color:#fff;border-radius:9px;padding:10px 12px;font-weight:750;font-size:12px}.nearby-tools .secondary{background:#edf3e9;color:var(--green)}.nearby-status{font-size:11px;color:var(--muted);width:100%}.mini-btn{background:#fff;border:1px solid var(--line);padding:8px 10px;border-radius:9px;font-size:12px;text-decoration:none}
+.location-results{display:grid;gap:6px;width:100%;max-height:220px;overflow-y:auto}.location-results[hidden]{display:none}.location-results button{display:block;text-align:left;border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 11px;color:var(--ink);font-size:11px}.location-results button:hover{background:#f0f6e9;border-color:#cbdcbe}.location-results small{display:block;color:var(--muted);margin-top:3px}
+.location-attribution{width:100%;font-size:10px;color:var(--muted)}.location-attribution a{color:var(--green)}.leaflet-tooltip.route-tooltip{white-space:normal;min-width:180px;max-width:320px;padding:9px 11px;border:1px solid #dce6dc;border-radius:10px;box-shadow:0 5px 18px #173b2b20;color:var(--ink)}.route-tooltip .shared-route+.shared-route{border-top:1px solid #e4e9e2;margin-top:6px;padding-top:6px}.route-tooltip strong{display:block;color:var(--green);font-size:13px;margin-bottom:3px}.route-tooltip span{display:block;font-size:11px;line-height:1.45}.leaflet-tooltip.stop-tooltip{padding:5px 8px;border:1px solid #dce6dc;border-radius:8px;box-shadow:0 3px 12px #173b2b1c;color:var(--ink);font-size:11px}
+.vehicle-marker-container{background:transparent;border:0}.vehicle-marker{display:grid;place-items:center;width:29px;height:29px;border:2px solid #fff;border-radius:50%;background:#176b55;color:#fff;box-shadow:0 2px 8px #122e2b55;font-size:16px}.vehicle-status{font-size:11px;color:var(--muted);padding:0 18px 10px}.leaflet-tooltip.vehicle-tooltip{padding:8px 10px;border:1px solid #dce6dc;border-radius:9px;box-shadow:0 4px 14px #173b2b20;color:var(--ink);font-size:11px}
+#map{height:470px;flex:1;min-height:420px;background:#edf1e8}.map-legend{display:flex;gap:14px;align-items:center;padding:13px 18px;color:var(--muted);font-size:11px;border-top:1px solid var(--line);flex-wrap:wrap}.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--green)}.legend-line{display:inline-block;width:17px;height:3px;background:#529b79;margin-right:5px;vertical-align:middle}
+.details{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.detail-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:19px;box-shadow:var(--shadow)}.detail-title{display:flex;justify-content:space-between;align-items:start;gap:10px}.detail-title h2{font-size:20px;margin:0;letter-spacing:-.04em}.sub{color:var(--muted);font-size:12px;margin-top:5px}.status{font-size:10px;background:#fff4d9;color:#8c6812;padding:5px 8px;border-radius:7px;white-space:nowrap}.schedule-tabs{display:flex;gap:6px;margin:18px 0 12px}.sched-tab{padding:8px 12px;border:1px solid var(--line);background:white;border-radius:9px;font-size:12px;color:var(--muted)}.sched-tab.active{background:#eaf3e5;color:var(--green);border-color:#d5e6c7;font-weight:800}.times{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.time{background:#f5f7f3;padding:10px 7px;text-align:center;border-radius:9px;font-weight:750;font-size:13px}.time span{display:block;color:var(--muted);font-size:9px;font-weight:500;margin-top:2px}.stops{margin-top:16px;display:grid;gap:0;max-height:460px;overflow-y:auto;padding-right:5px}.stop{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:center;position:relative;padding:8px 0;font-size:12px}.stop:not(:last-child):before{content:"";position:absolute;left:7px;top:24px;bottom:-8px;width:1px;background:#d9e4d7}.stop-pin{z-index:1;width:15px;height:15px;border:3px solid #8ebd79;border-radius:50%;background:white}.stop small{color:var(--muted)}.stop .stop-eta{display:block;color:var(--green);font-size:10px;font-weight:750;margin-top:2px}.callout{margin-top:15px;padding:11px 12px;border-radius:10px;background:#f5f7f3;color:var(--muted);font-size:11px}.callout a{color:var(--green);font-weight:800}
+.footer{padding:24px clamp(16px,4vw,56px);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:18px;color:var(--muted);font-size:11px}.footer a{color:var(--green)}
+.empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:13px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero-stats{display:none}.workspace{grid-template-columns:1fr}.sidebar{min-height:unset}.route-list{max-height:300px}.map-panel{min-height:520px}#map{height:390px;min-height:350px}.details{grid-template-columns:1fr}.toplinks a:not(.official){display:none}}
+@media(max-width:480px){.topbar{height:60px}.brand{font-size:17px}.hero{padding-top:25px}.map-head{padding:14px}.map-actions .mini-btn:first-child{display:none}.times{grid-template-columns:repeat(3,1fr)}.footer{flex-direction:column}.detail-card{padding:15px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo">桃</div><span>桃小巴地圖</span></div>
+  <nav class="toplinks"><a href="#routes">路線總覽</a><a href="#schedule">時刻表</a><a class="official" href="https://ebus.tycg.gov.tw/ebus/" target="_blank" rel="noreferrer">官方公車動態 ↗</a></nav>
+</header>
+<section class="hero">
+  <div><div class="eyebrow"><span class="dot"></span> TAOYUAN COMMUNITY TRANSIT</div><h1>每一條路線，<br>都近一點。</h1><p>探索桃小巴路線、沿線站點與班次資訊。選擇路線即可查看地圖與時刻表，出發前請以官方公告為準。</p></div>
+  <div class="hero-stats"><div class="stat"><b id="routeCount">載入中</b><span>官方路線</span></div><div class="stat"><b>即時資料</b><span>桃園市公車動態資訊</span></div></div>
+</section>
+<main>
+<div class="workspace" id="routes">
+  <aside class="sidebar">
+    <div class="side-head"><div class="section-title">尋找路線 <span class="pill">路線目錄</span></div>
+      <label class="search"><span>⌕</span><input id="search" placeholder="搜尋路線、地區或站名…" aria-label="搜尋路線"></label>
+      <div class="filters"><button class="filter active" data-area="全部">全部</button><button class="filter" data-area="大園">大園</button><button class="filter" data-area="大溪">大溪</button><button class="filter" data-area="八德">八德</button><button class="filter" data-area="觀音">觀音</button><button class="filter" data-area="新屋">新屋</button></div>
+    </div>
+    <div class="route-list" id="routeList"></div>
+  </aside>
+  <section class="map-panel">
+    <div class="map-head"><div><strong>桃園市・桃小巴路線地圖</strong><small>路線與站序由官方公車動態資訊系統載入；勾選可同時顯示多條路線</small></div><div class="map-actions"><button class="mini-btn" id="allRoutes">顯示全覽</button><button class="mini-btn" id="clearRoutes">全部隱藏</button><a class="mini-btn" href="https://ebus.tycg.gov.tw/ebus/" target="_blank" rel="noreferrer">官方地圖 ↗</a></div></div>
+    <div class="nearby-tools"><input id="locationQuery" placeholder="輸入地點或地址，例如：桃園高鐵站" aria-label="輸入地點或地址"><button id="searchLocation">搜尋地點</button><button id="nearMe" class="secondary">使用我的位置</button><select id="radius" aria-label="附近範圍"><option value="2">附近 2 公里</option><option value="5" selected>附近 5 公里</option><option value="10">附近 10 公里</option><option value="20">附近 20 公里</option></select><button id="nearbyRoutes" class="secondary">顯示附近路線</button><a class="mini-btn" href="https://opendata.tycg.gov.tw/datalist/6d80b18f-94fd-4811-bac2-a48d72395328" target="_blank" rel="noreferrer">官方路線資料集 ↗</a><a class="mini-btn" href="https://odstag.tycg.gov.tw/datalist/cda971c3-18af-4c19-9728-33e86cf555e9" target="_blank" rel="noreferrer">官方線型資料集 ↗</a><div id="nearbyStatus" class="nearby-status">載入官方路線後，可搜尋地點或使用裝置定位，查看附近路線。</div><div id="locationResults" class="location-results" aria-live="polite" hidden></div><small class="location-attribution">地名搜尋：<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · Nominatim</small></div>
+    <div id="map" aria-label="桃小巴路線地圖"></div>
+    <div class="map-legend"><span><i class="legend-line"></i>官方行駛線（即時載入）</span><span><i class="legend-line" style="background:#c0395a"></i>重疊路線以不同顏色區分</span><span><i class="legend-dot"></i>顯示路線的官方站點</span><span>🚌 可見路線即時公車位置</span><span>資料來源：桃園市公車動態資訊系統</span></div>
+  </section>
+</div>
+<div class="details" id="schedule">
+  <section class="detail-card">
+    <div class="detail-title"><div><h2 id="detailRoute">官方路線載入中…</h2><div class="sub" id="detailSub">正在連線桃園市公車動態資訊系統</div></div><span class="status">時刻請核對官方公告</span></div>
+    <div class="schedule-tabs"><button class="sched-tab active" data-sched="weekday">平日時刻</button><button class="sched-tab" data-sched="holiday">假日時刻</button></div>
+    <div class="times" id="times"></div>
+    <div class="callout">此展示版不會猜測未核實的班次。查看最新班次、到站預估與路線異動，請前往<a href="https://ebus.tycg.gov.tw/ebus/" target="_blank" rel="noreferrer">桃園市公車動態資訊系統 ↗</a>。</div>
+  </section>
+  <section class="detail-card">
+    <div class="detail-title"><div><h2>沿線站點</h2><div class="sub" id="stopSubtitle">路線選擇後顯示站點摘要</div></div><span class="pill">站點資訊</span></div>
+    <div class="stops" id="stops"></div>
+    <div class="callout">目前只展示官方公告中可確認的站點摘要；精確站序、站牌位置與方向請以官方路線圖為準。</div>
+  </section>
+</div>
+</main>
+<footer class="footer"><span>桃小巴地圖 · 社區交通探索介面</span><span>資料參考：<a href="https://opendata.tycg.gov.tw/datalist/6d80b18f-94fd-4811-bac2-a48d72395328" target="_blank" rel="noreferrer">官方路線資料集</a> · <a href="https://traffic.tycg.gov.tw/" target="_blank" rel="noreferrer">桃園市政府交通局</a> · <a href="https://ebus.tycg.gov.tw/ebus/" target="_blank" rel="noreferrer">公車動態資訊系統</a></span></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const officialGraphql = "https://ebus.tycg.gov.tw/ebus/graphql";
+let routes = [];
+const map = L.map('map', {
+  zoomControl: false
+}).setView([24.98, 121.20], 10);
+L.control.zoom({
+  position: 'bottomright'
+}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18, attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+const routeLayer = L.layerGroup().addTo(map);
+let selected = null;
+let area = "全部";
+const vehicleLayer = L.layerGroup().addTo(map);
+const liveVehicleMarkers = new Map();
+const visibleStopMarkers = new Map();
+let liveEstimatesByRoute = new Map();
+const vehicleRefreshIntervalMs = 30_000;
+// Queue a fresh fetch when the map selection changes during an in-flight request.
+let vehicleRefreshRunning = false, vehicleRefreshQueued = false, vehicleRefreshVersion = 0;
+const enabled = new Set();
+const dataSourceStatus = document.createElement("div");
+dataSourceStatus.className = "nearby-status";
+dataSourceStatus.style.padding = "0 18px 12px";
+dataSourceStatus.textContent = "正在載入官方路線、行駛線型與站序…";
+document.querySelector(".map-panel").insertBefore(dataSourceStatus, document.getElementById("map"));
+const vehicleStatus = document.createElement("div");
+vehicleStatus.className = "vehicle-status";
+vehicleStatus.setAttribute("aria-live", "polite");
+vehicleStatus.textContent = "等待載入路線，以顯示即時公車位置…";
+document.querySelector(".map-panel").insertBefore(vehicleStatus, document.getElementById("map"));
+let nearbyCenter = null, nearbyOnly = false, locationMarker = null, locationAccuracyCircle = null, nearbyAccuracy = null, nearbyApproximate = false, nearbyLabel = '搜尋位置';
+let geocodeLastRequestAt = 0, geocodeSearchId = 0, positionWatchId = null, positionWaitTimer = null, positionRequestId = 0, geocodeQueue = Promise.resolve();
+let overlapSourceRoutes = null, routeOverlapByPath = new Map(), routeOverlapConflicts = new Map();
+const geocodeCache = new Map();
+function distanceKm(a, b) {
+  const rad = x => x * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]), dLon = rad(b[1] - a[1]);
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function nearbyRouteCandidates() {
+  if (!nearbyCenter) return [];
+  const radius = Number(document.getElementById('radius').value);
+  return routes.filter(route => routePaths(route).length && routeDistance(route, nearbyCenter) <= radius);
+}
+
+function syncNearbySelection() {
+  if (!nearbyOnly || !nearbyCenter) return;
+  enabled.clear();
+  nearbyRouteCandidates().forEach(route => enabled.add(routeKey(route)));
+  if (selected && !enabled.has(routeKey(selected))) selected = null;
+}
+
+function setNearby(point, label, accuracy, approximate) {
+  nearbyCenter = point;
+  nearbyAccuracy = Number.isFinite(accuracy) ? accuracy : null;
+  nearbyApproximate = Boolean(approximate);
+  nearbyLabel = label;
+  nearbyOnly = true;
+  selected = null;
+  syncNearbySelection();
+  const results = document.getElementById('locationResults');
+  results.hidden = true;
+  results.innerHTML = '';
+  draw();
+  renderList();
+  updateNearbyStatus();
+  document.getElementById('detailRoute').textContent = '附近桃小巴路線';
+  document.getElementById('detailSub').textContent = label + '｜半徑 ' + document.getElementById('radius').value + ' 公里';
+  document.getElementById('times').innerHTML = '<div class="callout" style="grid-column:1/-1;margin:0">附近路線已在地圖上高亮。請選取左側路線查看站點摘要，班次請至官方系統核對。</div>';
+  document.getElementById('stops').innerHTML = '';
+}
+
+function renderLocationResults(results) {
+  const container = document.getElementById('locationResults'), shown = results.slice(0, 5);
+  container.innerHTML = shown.map((result, index) => '<button type="button" data-location-index="' + index + '">' + escapeHtml(result.display_name) + '<small>' + escapeHtml(result.approximate ? '門牌未精確匹配 · 道路附近位置' : '門牌／地點匹配') + ' · ' + escapeHtml(result.type || '地點') + '</small></button>').join('');
+  container.hidden = !shown.length;
+  container.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+    const result = shown[Number(button.dataset.locationIndex)];
+    if (result) setNearby([Number(result.lat), Number(result.lon)], result.display_name, null, result.approximate);
+  }));
+}
+
+function chineseNumberToArabic(value) {
+  const digits = {
+    一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 兩: 2, 零: 0, 〇: 0
+  };
+  if (value === '十') return '10';
+  const ten = value.indexOf('十');
+  if (ten >= 0) return String((ten === 0 ? 1 : (digits[value[0]] || 0)) * 10 + (ten < value.length - 1 ? (digits[value[value.length - 1]] || 0) : 0));
+  return value.split('').map(char => digits[char] ?? char).join('');
+}
+
+function normalizeTaiwanAddress(value) {
+  return String(value || '').normalize('NFKC').trim().replace(/[一二三四五六七八九十兩零〇]+(?=(?:段|巷|弄|號|号))/g, number => chineseNumberToArabic(number)).replace(/[－—–]/g, '-').replace(/\s+/g, ' ');
+}
+
+function expectedHouseNumber(query) {
+  const match = normalizeTaiwanAddress(query).match(/(\d+(?:[-之]\d+)?)(?:號|号)?\s*$/);
+  return match ? match[1].replace(/-/g, '之') : '';
+}
+
+function geocodeResultIsExact(result, query, variant) {
+  if (variant.approximate) return false;
+  const expected = expectedHouseNumber(query);
+  if (!expected) return true;
+  const found = String(result.address && result.address.house_number || '').replace(/號|号/g, '').replace(/[－—–-]/g, '之').replace(/\s+/g, '');
+  return Boolean(found && found.endsWith(expected));
+}
+
+function geocodeVariants(query) {
+  const normalized = normalizeTaiwanAddress(query), variants = [{
+    params: {
+      q: query
+    }
+  }, {
+    params: {
+      q: normalized
+    }
+  }], parts = normalized.match(/^(.*?市)(.*?區)(.+?)(\d+巷(?:\d+弄)?)(\d+(?:[-之]\d+)?號?)$/);
+  if (parts) {
+    const [, city, district, road, lane, house] = parts, alternateHouse = house.replace(/-/g, '之');
+    variants.push({
+      params: {
+        q: [city, district, road, lane + house].join(', ')
+      }
+    });
+    variants.push({
+      params: {
+        q: [city, district, road, lane + alternateHouse].join(', ')
+      }
+    });
+    variants.push({
+      params: {
+        street: lane + house + ' ' + road, city: district, county: city, country: 'Taiwan'
+      }
+    });
+    variants.push({
+      params: {
+        street: lane + alternateHouse + ' ' + road, city: district, county: city, country: 'Taiwan'
+      }
+    });
+    variants.push({
+      params: {
+        q: [city, district, road, lane].join(', ')
+      }, approximate: true
+    });
+  }
+  else {
+    const address = normalized.match(/^(.*?市)(.*?區)(.+?)(\d+(?:[-之]\d+)?號?)$/);
+    if (address) {
+      const [, city, district, road, house] = address, alternateHouse = house.replace(/-/g, '之');
+      variants.push({
+        params: {
+          q: [city, district, road, house].join(', ')
+        }
+      });
+      variants.push({
+        params: {
+          street: house + ' ' + road, city: district, county: city, country: 'Taiwan'
+        }
+      });
+      variants.push({
+        params: {
+          street: alternateHouse + ' ' + road, city: district, county: city, country: 'Taiwan'
+        }
+      });
+      variants.push({
+        params: {
+          q: [city, district, road].join(', ')
+        }, approximate: true
+      });
+    }
+  }
+  const seen = new Set();
+  return variants.filter(variant => {
+    const key = JSON.stringify(variant.params);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function geocodeRequest(queryParams, searchId) {
+  // Nominatim requests are serialized and spaced to respect its public-use limit.
+  const request = geocodeQueue.then(async () => {
+    const delay = Math.max(0, 1100 - (Date.now() - geocodeLastRequestAt));
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+    if (searchId !== geocodeSearchId) return [];
+    geocodeLastRequestAt = Date.now();
+    const params = new URLSearchParams({
+      format: 'jsonv2', addressdetails: '1', limit: '5', countrycodes: 'tw', viewbox: '120.9,25.3,121.5,24.6', 'accept-language': 'zh-TW', ...queryParams
+    });
+    const response = await fetch('https://nominatim.openstreetmap.org/search?' + params.toString());
+    if (!response.ok) throw new Error('搜尋服務暫時無法使用');
+    return response.json();
+  });
+  geocodeQueue = request.catch(() => []);
+  return request;
+}
+
+async function geocodeAddress(query, searchId) {
+  const candidates = new Map();
+  for (const variant of geocodeVariants(query)) {
+    const data = await geocodeRequest(variant.params, searchId);
+    if (searchId !== geocodeSearchId) return [];
+    for (const result of data) {
+      const key = result.osm_type && result.osm_id ? result.osm_type + ':' + result.osm_id : result.lat + ',' + result.lon, resultIsExact = geocodeResultIsExact(result, query, variant), existing = candidates.get(key);
+      if (!existing || resultIsExact && !existing.exact) candidates.set(key, {
+        result: {
+          ...result, approximate: !resultIsExact
+        }, exact: resultIsExact
+      });
+    }
+    if ([...candidates.values()].some(candidate => candidate.exact)) break;
+  }
+  return [...candidates.values()].sort((a, b) => Number(b.exact) - Number(a.exact)).map(candidate => candidate.result);
+}
+
+async function searchLocation() {
+  const query = document.getElementById('locationQuery').value.trim().replace(/\s+/g, ' '), searchId = ++geocodeSearchId, status = document.getElementById('nearbyStatus'), results = document.getElementById('locationResults');
+  results.hidden = true;
+  results.innerHTML = '';
+  if (!query) {
+    status.textContent = '請先輸入地點或地址。';
+    return;
+  }
+  positionRequestId++;
+  stopPositionWatch();
+  const cacheKey = query.toLocaleLowerCase();
+  status.textContent = '正在搜尋地址（會嘗試不同的門牌寫法）…';
+  try {
+    let data = geocodeCache.get(cacheKey);
+    if (!data) {
+      data = await geocodeAddress(query, searchId);
+      if (searchId !== geocodeSearchId) return;
+      geocodeCache.set(cacheKey, data);
+    }
+    if (searchId !== geocodeSearchId) return;
+    if (!data.length) throw new Error('找不到這個地址或道路，請確認縣市、路名與門牌，或改輸入附近地標。');
+    const exact = data.filter(result => !result.approximate);
+    if (exact.length === 1) {
+      setNearby([Number(exact[0].lat), Number(exact[0].lon)], exact[0].display_name);
+      return;
+    }
+    renderLocationResults(data);
+    status.textContent = '找到 ' + data.length + ' 個可能位置' + (exact.length ? '，請選擇門牌相符的結果。' : '；未能確認門牌，請選擇道路附近位置並留意精度。');
+  }
+  catch (e) {
+    if (searchId !== geocodeSearchId) return;
+    status.textContent = e.message || '地點搜尋失敗，請稍後再試。';
+  }
+}
+
+function routeKey(r) {
+  return String(r.id == null ? r.no : r.id);
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }
+  [char]));
+}
+
+function routePaths(r) {
+  if (Array.isArray(r.paths) && r.paths.length) return r.paths;
+  if (r.officialGeometry || r.path) return [r.officialGeometry || r.path];
+  return [];
+}
+
+function decodePolyline(encoded, precision) {
+  const points = [];
+  if (!encoded) return points;
+  let index = 0, lat = 0, lng = 0, factor = Math.pow(10, precision || 5);
+  while (index < encoded.length) {
+    let result = 0, shift = 0, byte;
+    do {
+      if (index >= encoded.length) return [];
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 31) << shift;
+      shift += 5;
+    }
+    while (byte >= 32);
+    const dlat = result & 1 ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+    result = 0;
+    shift = 0;
+    do {
+      if (index >= encoded.length) return [];
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 31) << shift;
+      shift += 5;
+    }
+    while (byte >= 32);
+    const dlng = result & 1 ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+    const point = [lat / factor, lng / factor];
+    if (Number.isFinite(point[0]) && Number.isFinite(point[1]) && Math.abs(point[0]) <= 90 && Math.abs(point[1]) <= 180) points.push(point);
+    else return [];
+  }
+  return points;
+}
+
+function deriveArea(route) {
+  const regions = ['大園', '大溪', '八德', '觀音', '新屋', '龍潭', '楊梅', '蘆竹', '龜山', '平鎮', '中壢', '桃園', '復興'];
+  const text = [route.routeGroup, route.name, route.description, route.departure, route.destination].concat((route.stations || []).map(s => s.name)).join(' ');
+  return regions.find(region => text.includes(region)) || '其他';
+}
+
+function makeOfficialRoute(route) {
+  const stationEdges = route.stations && route.stations.edges ? route.stations.edges : route.stations || [];
+  const stations = stationEdges.map(s => ({
+    orderNo: Number(s.orderNo) || 0, direction: s.goBack == null ? s.direction : s.goBack, id: s.node ? s.node.id : s.id, name: s.node ? s.node.name : s.name, lat: Number(s.node ? s.node.lat : s.lat), lon: Number(s.node ? s.node.lon : s.lon)
+  })).filter(s => s.name).sort((a, b) => a.orderNo - b.orderNo);
+  const point = route.routePoint || {};
+  const pathEntries = [['去程', decodePolyline(point.go, 5)], ['返程', decodePolyline(point.back, 5)]].filter(entry => entry[1].length >= 2);
+  const paths = pathEntries.map(entry => entry[1]);
+  return {
+    id: String(route.id), no: String(route.name || route.id), name: String(route.name || route.id), description: String(route.description || ''), routeGroup: String(route.routeGroup || ''), opType: Number(route.opType), area: deriveArea({
+      ...route, stations
+    }), districts: deriveArea({
+      ...route, stations
+    }), origin: String(route.departure || ''), dest: String(route.destination || ''), stops: stations.map(s => s.name), stations: stations, paths: paths, pathDirections: pathEntries.map(entry => entry[0]), officialGeometry: paths.length > 0, wd: [], hd: []
+  };
+}
+
+async function graphql(query) {
+  const response = await fetch(officialGraphql, {
+    method: 'POST', headers: {
+      'Content-Type': 'application/json', 'Accept': 'application/json'
+    }, body: JSON.stringify({
+      query: query
+    })
+  });
+  if (!response.ok) throw new Error('官方資料服務回應 ' + response.status);
+  const payload = await response.json();
+  if (payload.errors && payload.errors.length) throw new Error(payload.errors.map(error => error.message).join('；'));
+  return payload.data;
+}
+
+// The official API provides both vehicle positions and per-stop arrival estimates.
+async function fetchLiveRouteData(routesToFetch) {
+  const vehicles = [];
+  const estimatesByRoute = new Map();
+
+  for (let start = 0; start < routesToFetch.length; start += 20) {
+    const batch = routesToFetch.slice(start, start + 20);
+    const aliases = batch.map((route, index) => 'r' + index);
+    const selections = batch.map((route, index) =>
+      aliases[index] + ':route(xno:' + Number(route.id) + ',lang:"zh"){id name buses{edges{goBack node{id type lat lon}}} estimateTimes(first:200){edges{node{id goBack etas{etaTime busId isLast}}}}}'
+    ).join(' ');
+    const data = await graphql('query {' + selections + '}');
+
+    batch.forEach((route, index) => {
+      const routeData = data[aliases[index]];
+      const fetchedAt = Date.now();
+      const estimatesByStop = new Map();
+
+      (routeData?.estimateTimes?.edges || []).forEach(edge => {
+        const estimate = edge.node;
+        if (!estimate) return;
+        // EstimateTime.id matches the route station node id; sid is an internal estimate ID.
+        const stopId = String(estimate.id);
+        const stopEstimates = estimatesByStop.get(stopId) || [];
+        stopEstimates.push(estimate);
+        estimatesByStop.set(stopId, stopEstimates);
+      });
+
+      estimatesByRoute.set(routeKey(route), { fetchedAt, byStop: estimatesByStop });
+
+      (routeData?.buses?.edges || []).forEach(edge => {
+        const bus = edge.node || {};
+        const lat = Number(bus.lat), lon = Number(bus.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < 20 || lat > 27 || lon < 118 || lon > 123) return;
+
+        vehicles.push({
+          key: routeKey(route) + ':' + String(bus.id || lat + ',' + lon),
+          routeKey: routeKey(route),
+          routeNo: route.no,
+          busId: String(bus.id || '車輛'),
+          directionCode: Number(edge.goBack),
+          direction: Number(edge.goBack) === 1 ? '去程' : Number(edge.goBack) === 2 ? '返程' : '方向未標示',
+          lat,
+          lon
+        });
+      });
+    });
+  }
+
+  return { vehicles, estimatesByRoute };
+}
+
+function getStopEstimate(route, stop, busId = null) {
+  if (stop.id == null) return null;
+
+  const routeEstimates = liveEstimatesByRoute.get(routeKey(route));
+  const directionCode = stop.direction == null || stop.direction === '' ? NaN : Number(stop.direction);
+  const candidates = (routeEstimates?.byStop.get(String(stop.id)) || [])
+    .filter(estimate => !Number.isFinite(directionCode) || Number(estimate.goBack) === directionCode)
+    .flatMap(estimate => estimate.etas || [])
+    .filter(eta => busId == null || String(eta.busId) === String(busId))
+    .filter(eta => Number.isFinite(Number(eta.etaTime)) && Number(eta.etaTime) >= 0)
+    .sort((a, b) => Number(a.etaTime) - Number(b.etaTime));
+
+  if (!candidates.length) return null;
+  return { eta: candidates[0], fetchedAt: routeEstimates.fetchedAt };
+}
+
+function countdownLabel(estimate) {
+  if (!estimate) return '暫無預估';
+  if (Date.now() - estimate.fetchedAt > 90_000) return '資料逾時';
+
+  // The official ETA is in whole minutes; count down from when this page fetched it.
+  const minutes = Number(estimate.eta.etaTime);
+  const elapsedMinutes = Math.floor((Date.now() - estimate.fetchedAt) / 60_000);
+  const remainingMinutes = Math.max(0, minutes - elapsedMinutes);
+  return 'T−' + remainingMinutes + ' 分' + (remainingMinutes === 0 ? '（進站中）' : '');
+}
+
+function getNextStopForVehicle(vehicle) {
+  const route = routes.find(item => routeKey(item) === vehicle.routeKey);
+  if (!route) return null;
+
+  const pathIndex = (route.pathDirections || []).findIndex(direction => direction === vehicle.direction);
+  const path = pathIndex >= 0 ? routePaths(route)[pathIndex] : null;
+  if (!path || path.length < 2) return null;
+
+  // Use the bus GPS position against its official directional path, then match
+  // the ETA record for that bus at the first stop still ahead of it.
+  const busProgress = distanceAlongRoutePath(path, [vehicle.lat, vehicle.lon]);
+  const upcomingStops = (route.stations || [])
+    .filter(stop => Number(stop.direction) === vehicle.directionCode && Number.isFinite(stop.lat) && Number.isFinite(stop.lon))
+    .map(stop => ({ stop, progress: distanceAlongRoutePath(path, [stop.lat, stop.lon]) }))
+    .filter(item => item.progress > busProgress + 3)
+    .sort((a, b) => a.progress - b.progress);
+
+  const nextStop = upcomingStops[0]?.stop;
+  return nextStop ? { stop: nextStop, estimate: getStopEstimate(route, nextStop, vehicle.busId) } : null;
+}
+
+function vehicleTooltip(vehicle, queriedAt) {
+  const next = getNextStopForVehicle(vehicle);
+  const nextStopText = next
+    ? '下一站：' + escapeHtml(next.stop.name) + ' · ' + escapeHtml(countdownLabel(next.estimate))
+    : '下一站：暫無資料';
+
+  return '路線 ' + escapeHtml(vehicle.routeNo) + ' · 車號 ' + escapeHtml(vehicle.busId) + ' · ' + vehicle.direction +
+    '<br>' + nextStopText +
+    '<br>位置資料最近查詢 ' + queriedAt;
+}
+
+function stopTooltip(stop) {
+  const rows = [...stop.routes.values()]
+    .sort((a, b) => a.route.no.localeCompare(b.route.no, 'zh-Hant', { numeric: true }))
+    .map(({ route, station }) => {
+      const direction = Number(station.direction) === 1 ? '去程' : Number(station.direction) === 2 ? '返程' : '';
+      return escapeHtml(route.no) + (direction ? ' · ' + direction : '') + ' · ' + escapeHtml(countdownLabel(getStopEstimate(route, station)));
+    });
+
+  return '<strong>' + escapeHtml(stop.name) + '</strong>' + (rows.length ? '<br>' + rows.join('<br>') : '');
+}
+
+function refreshVisibleStopTooltips() {
+  for (const [marker, stop] of visibleStopMarkers) {
+    marker.setTooltipContent(stopTooltip(stop));
+  }
+}
+
+function renderLiveVehicles(vehicles, queriedAt) {
+  const activeKeys = new Set();
+  vehicles.forEach(vehicle => {
+    activeKeys.add(vehicle.key);
+    const tooltip = vehicleTooltip(vehicle, queriedAt);
+    let entry = liveVehicleMarkers.get(vehicle.key);
+    if (!entry) {
+      const icon = L.divIcon({
+        className: 'vehicle-marker-container', html: '<span class="vehicle-marker" aria-hidden="true">🚌</span>', iconSize: [29, 29], iconAnchor: [14, 14]
+      });
+      const marker = L.marker([vehicle.lat, vehicle.lon], {
+        icon, title: '桃小巴 ' + vehicle.routeNo + ' 即時位置'
+      }).addTo(vehicleLayer).bindTooltip(tooltip, {
+        direction: 'top', offset: [0, -12], className: 'vehicle-tooltip'
+      });
+      marker.on('click', () => choose(vehicle.routeKey));
+      entry = {
+        marker, routeKey: vehicle.routeKey
+      };
+      liveVehicleMarkers.set(vehicle.key, entry);
+    }
+    else {
+      entry.marker.setLatLng([vehicle.lat, vehicle.lon]);
+      entry.marker.setTooltipContent(tooltip);
+    }
+  });
+  for (const [key, entry] of liveVehicleMarkers) {
+    if (activeKeys.has(key)) continue;
+    entry.marker.remove();
+    liveVehicleMarkers.delete(key);
+  }
+}
+
+function refreshLiveVehicles() {
+  const requestVersion = ++vehicleRefreshVersion;
+  const visibleRoutes = routes.filter(route => routeIsVisible(route) && /^\d+$/.test(String(route.id)));
+  const routesToFetch = [...visibleRoutes];
+  if (selected && /^\d+$/.test(String(selected.id)) && !routesToFetch.some(route => routeKey(route) === routeKey(selected))) {
+    routesToFetch.push(selected);
+  }
+
+  if (!routesToFetch.length) {
+    vehicleLayer.clearLayers();
+    liveVehicleMarkers.clear();
+    liveEstimatesByRoute.clear();
+    refreshVisibleStopTooltips();
+    vehicleStatus.textContent = '目前沒有勾選並顯示的路線。勾選路線後會載入即時公車位置。';
+    return;
+  }
+  if (vehicleRefreshRunning) {
+    vehicleRefreshQueued = true;
+    return;
+  }
+  vehicleRefreshRunning = true;
+  vehicleStatus.textContent = visibleRoutes.length
+    ? '正在查詢 ' + visibleRoutes.length + ' 條可見路線的即時公車位置…'
+    : '正在更新所選路線的站點到站預估…';
+  fetchLiveRouteData(routesToFetch).then(({ vehicles, estimatesByRoute }) => {
+    if (requestVersion !== vehicleRefreshVersion) return;
+    const queriedAt = new Date().toLocaleTimeString('zh-TW', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    const visibleRouteKeys = new Set(visibleRoutes.map(routeKey));
+    liveEstimatesByRoute = estimatesByRoute;
+    renderLiveVehicles(vehicles.filter(vehicle => visibleRouteKeys.has(vehicle.routeKey)), queriedAt);
+    refreshVisibleStopTooltips();
+    if (selected) renderDetails();
+    vehicleStatus.textContent = visibleRoutes.length
+      ? '即時公車位置：' + vehicles.filter(vehicle => visibleRouteKeys.has(vehicle.routeKey)).length + ' 輛 · 最近查詢 ' + queriedAt + ' · 每 30 秒更新'
+      : '目前沒有顯示中的路線 · 所選路線站點預估已更新於 ' + queriedAt;
+  }).catch(error => {
+    if (requestVersion !== vehicleRefreshVersion) return;
+    vehicleStatus.textContent = '即時公車位置與到站預估暫時無法更新：' + (error.message || '官方服務連線失敗');
+    refreshVisibleStopTooltips();
+    if (selected) renderDetails();
+  }).finally(() => {
+    vehicleRefreshRunning = false;
+    if (vehicleRefreshQueued) {
+      vehicleRefreshQueued = false;
+      refreshLiveVehicles();
+    }
+  });
+}
+
+async function fetchOfficialRoutes() {
+  const catalog = await graphql('query { routes(lang:"zh") { edges { node { id seq name opType routeGroup description departure destination } } } }');
+  const candidates = (catalog.routes.edges || []).map(edge => edge.node).filter(route => Number(route.opType) === 10 && /^\d+$/.test(String(route.id))).sort((a, b) => Number(a.seq) - Number(b.seq));
+  if (!candidates.length) throw new Error('官方路線目錄沒有回傳可用的小型公車路線');
+  const details = [];
+  for (let start = 0; start < candidates.length; start += 20) {
+    const batch = candidates.slice(start, start + 20), aliases = batch.map((route, index) => 'r' + index);
+    const selections = batch.map((route, index) => aliases[index] + ':route(xno:' + Number(route.id) + ',lang:"zh"){id name departure destination opType description routeGroup routePoint{go back} stations{edges{orderNo goBack node{id name lat lon}}}}').join(' ');
+    const data = await graphql('query {' + selections + '}');
+    batch.forEach((route, index) => {
+      const detail = data[aliases[index]];
+      if (detail) details.push(makeOfficialRoute(detail));
+    });
+  }
+  return details.filter(route => route.paths.length);
+}
+
+async function fetchTestSnapshot() {
+  const response = await fetch('./official-routes-test.json', {
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error('無法讀取本機官方路線測試快照');
+  const snapshot = await response.json();
+  return (snapshot.routes || []).map(makeOfficialRoute).filter(route => route.paths.length);
+}
+
+function installRoutes(nextRoutes) {
+  routes = nextRoutes;
+  routes.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant', {
+    numeric: true
+  }));
+  selected = routes.find(route => route.no === 'T519') || routes[0] || null;
+  enabled.clear();
+  routes.forEach(route => enabled.add(routeKey(route)));
+  nearbyOnly = false;
+  document.getElementById('routeCount').textContent = routes.length;
+  renderList();
+  if (selected) choose(routeKey(selected), { fitBounds: true });
+  else draw();
+  updateNearbyStatus();
+}
+
+function startLiveLoad() {
+  fetchOfficialRoutes().then(nextRoutes => {
+    installRoutes(nextRoutes);
+    dataSourceStatus.textContent = '已連線桃園市公車動態資訊系統：即時載入 ' + routes.length + ' 條官方路線與官方線型。';
+  }).catch(async error => {
+    dataSourceStatus.textContent = '官方即時資料暫時無法取得，正在載入隨附的官方測試快照…';
+    try {
+      const snapshotRoutes = await fetchTestSnapshot();
+      installRoutes(snapshotRoutes);
+      dataSourceStatus.textContent = '目前使用隨附的官方測試快照（非即時）：' + routes.length + ' 條路線。請確認 Live Server 可連線後重新整理以載入即時資料。';
+    }
+    catch (snapshotError) {
+      dataSourceStatus.textContent = '官方路線載入失敗：' + (error.message || '網路錯誤') + '；本機快照也無法讀取：' + (snapshotError.message || '讀取失敗') + '。請使用 VS Code Live Server 開啟網站。';
+      document.getElementById('routeList').innerHTML = '<div class="empty">路線載入失敗，請確認網路連線後重新整理。</div>';
+    }
+  });
+}
+
+function routeDistance(r, pt) {
+  const paths = routePaths(r);
+  if (!paths.length) return Infinity;
+  const rad = x => x * Math.PI / 180, latKm = 111.32, lngKm = latKm * Math.cos(rad(pt[0]));
+  let min = Infinity;
+  for (const coords of paths) {
+    if (coords.length === 1) {
+      min = Math.min(min, distanceKm(coords[0], pt));
+      continue;
+    }
+    for (let i = 1; i < coords.length; i++) {
+      const a = [(coords[i - 1][0] - pt[0]) * latKm, (coords[i - 1][1] - pt[1]) * lngKm], b = [(coords[i][0] - pt[0]) * latKm, (coords[i][1] - pt[1]) * lngKm], dx = b[0] - a[0], dy = b[1] - a[1], length = dx * dx + dy * dy, t = length ? Math.max(0, Math.min(1, -(a[0] * dx + a[1] * dy) / length)) : 0;
+      min = Math.min(min, Math.hypot(a[0] + t * dx, a[1] + t * dy));
+    }
+  }
+  return min;
+}
+
+function projectRoutePoint(point) {
+  const latitude = Array.isArray(point) ? Number(point[0]) : Number(point.lat), longitude = Array.isArray(point) ? Number(point[1]) : Number(point.lng);
+  return {
+    x: longitude * 111320 * Math.cos(24.9 * Math.PI / 180), y: latitude * 111320
+  };
+}
+
+function sampleRoutePath(coords, pathIndex, key, spacing = 18) {
+  const samples = [], points = coords.map(projectRoutePoint);
+  let travelled = 0, nextSample = 0, lastSample = -Infinity;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy);
+    if (!length) continue;
+    while (nextSample <= travelled + length) {
+      const fraction = Math.max(0, Math.min(1, (nextSample - travelled) / length));
+      samples.push({
+        key, pathIndex, along: nextSample, x: a.x + dx * fraction, y: a.y + dy * fraction
+      });
+      lastSample = nextSample;
+      nextSample += spacing;
+    }
+    travelled += length;
+  }
+  if (travelled - lastSample > spacing * .4 && points.length) samples.push({
+    key, pathIndex, along: travelled, x: points[points.length - 1].x, y: points[points.length - 1].y
+  });
+  return samples;
+}
+
+function intervalsFromMatches(values) {
+  if (!values.length) return [];
+  const distances = values.map(value => value.along).sort((a, b) => a - b), intervals = [];
+  let start = distances[0], end = distances[0];
+  const save = () => {
+    if (end - start >= 32) intervals.push({
+      start: Math.max(0, start - 9), end: end + 9
+    });
+  };
+  for (let i = 1; i < distances.length; i++) {
+    if (distances[i] - end <= 27) end = distances[i];
+    else {
+      save();
+      start = end = distances[i];
+    }
+  }
+  save();
+  return intervals;
+}
+
+// Precompute shared line sections once; hover tooltips only inspect nearby intervals.
+function buildRouteOverlapData(routeList) {
+  const cellSize = 26, tolerance = 13, grid = new Map(), samplesByRoute = new Map(), matches = new Map();
+  for (const route of routeList) {
+    const key = routeKey(route), samples = routePaths(route).flatMap((coords, index) => sampleRoutePath(coords, index, key));
+    samplesByRoute.set(key, samples);
+    for (const sample of samples) {
+      const cellX = Math.floor(sample.x / cellSize), cellY = Math.floor(sample.y / cellSize), cellKey = cellX + ',' + cellY, bucket = grid.get(cellKey) || [];
+      bucket.push(sample);
+      grid.set(cellKey, bucket);
+    }
+  }
+  for (const [key, samples] of samplesByRoute) {
+    for (const sample of samples) {
+      const cellX = Math.floor(sample.x / cellSize), cellY = Math.floor(sample.y / cellSize), closestByRoute = new Map();
+      for (let dx = -1; dx <= 1; dx++)for (let dy = -1; dy <= 1; dy++) {
+        const bucket = grid.get((cellX + dx) + ',' + (cellY + dy));
+        if (!bucket) continue;
+        for (const candidate of bucket) {
+          if (candidate.key === key) continue;
+          const distance = Math.hypot(candidate.x - sample.x, candidate.y - sample.y), previous = closestByRoute.get(candidate.key);
+          if (distance <= tolerance && (!previous || distance < previous.distance)) closestByRoute.set(candidate.key, {
+            distance, pathIndex: candidate.pathIndex, along: candidate.along
+          });
+        }
+      }
+      for (const [otherKey, otherMatch] of closestByRoute) {
+        const pairKey = key + '\u0000' + otherKey;
+        let byPath = matches.get(pairKey);
+        if (!byPath) {
+          byPath = new Map();
+          matches.set(pairKey, byPath);
+        }
+        const values = byPath.get(sample.pathIndex) || [];
+        values.push({
+          along: sample.along, otherPathIndex: otherMatch.pathIndex, otherAlong: otherMatch.along
+        });
+        byPath.set(sample.pathIndex, values);
+      }
+    }
+  }
+  const byRoute = new Map(), conflicts = new Map();
+  for (const [pairKey, byPath] of matches) {
+    const [key, otherKey] = pairKey.split('\u0000');
+    for (const [pathIndex, values] of byPath) {
+      const byOtherPath = new Map();
+      values.forEach(value => {
+        const grouped = byOtherPath.get(value.otherPathIndex) || [];
+        grouped.push(value);
+        byOtherPath.set(value.otherPathIndex, grouped);
+      });
+      for (const [otherPathIndex, pathValues] of byOtherPath) {
+        const intervals = intervalsFromMatches(pathValues);
+        if (!intervals.length) continue;
+        let routePathsMap = byRoute.get(key);
+        if (!routePathsMap) {
+          routePathsMap = new Map();
+          byRoute.set(key, routePathsMap);
+        }
+        const entries = routePathsMap.get(pathIndex) || [];
+        intervals.forEach(interval => entries.push({
+          ...interval, otherKey, otherPathIndex
+        }));
+        routePathsMap.set(pathIndex, entries);
+        const neighbors = conflicts.get(key) || new Set();
+        neighbors.add(otherKey);
+        conflicts.set(key, neighbors);
+        const reverseNeighbors = conflicts.get(otherKey) || new Set();
+        reverseNeighbors.add(key);
+        conflicts.set(otherKey, reverseNeighbors);
+      }
+    }
+  }
+  return {
+    byRoute, conflicts
+  };
+}
+
+function overlapColorsFor(visibleRoutes, conflicts) {
+  const palette = ['#c0395a', '#087e8b', '#b56b00', '#6941a5', '#167d58', '#b4438a', '#2367a5', '#a64b18', '#5b6f00', '#9a3f35', '#167c9a', '#724b25'], visible = new Set(visibleRoutes.map(routeKey)), colors = new Map();
+  let generated = 0;
+  for (const route of visibleRoutes) {
+    const key = routeKey(route), neighbors = conflicts.get(key);
+    if (!neighbors || ![...neighbors].some(other => visible.has(other))) continue;
+    const used = new Set([...neighbors].map(other => colors.get(other)).filter(Boolean));
+    let color = palette.find(candidate => !used.has(candidate));
+    if (!color) {
+      do {
+        color = 'hsl(' + Math.round((generated++ * 137.508) % 360) + ' 72% 40%)';
+      }
+      while (used.has(color));
+    }
+    colors.set(key, color);
+  }
+  return colors;
+}
+
+function routeInfoTooltip(entries) {
+  return '<div>' + entries.map(entry => {
+    const route = entry.route, index = entry.pathIndex, direction = (route.pathDirections && route.pathDirections[index]) || '方向未標示', stopCount = (route.stations || route.stops || []).length, lines = [route.routeGroup, route.origin + ' → ' + route.dest, direction + ' · ' + stopCount + ' 個站點'].filter(Boolean).map(escapeHtml);
+    return '<section class="shared-route"><strong>' + escapeHtml(route.no) + ' · ' + escapeHtml(route.description && route.description !== route.name ? route.description : route.name) + '</strong><span>' + lines.join('<br>') + '</span></section>';
+  }).join('') + '</div>';
+}
+
+function distanceAlongRoutePath(coords, point) {
+  const target = projectRoutePoint(point), points = coords.map(projectRoutePoint);
+  let travelled = 0, bestDistance = Infinity, bestAlong = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], dx = b.x - a.x, dy = b.y - a.y, lengthSquared = dx * dx + dy * dy, length = Math.sqrt(lengthSquared), fraction = lengthSquared ? Math.max(0, Math.min(1, ((target.x - a.x) * dx + (target.y - a.y) * dy) / lengthSquared)) : 0, distance = Math.hypot(target.x - (a.x + fraction * dx), target.y - (a.y + fraction * dy));
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestAlong = travelled + fraction * length;
+    }
+    travelled += length;
+  }
+  return bestAlong;
+}
+
+function addVisibleStopMarkers(visibleRoutes) {
+  visibleStopMarkers.clear();
+  const stops = new Map();
+  for (const route of visibleRoutes) {
+    for (const stop of route.stations || []) {
+      if (!Number.isFinite(stop.lat) || !Number.isFinite(stop.lon) || stop.lat < 20 || stop.lat > 27 || stop.lon < 118 || stop.lon > 123) continue;
+      const key = stop.lat.toFixed(5) + ',' + stop.lon.toFixed(5) + '|' + String(stop.name || '').trim();
+      let entry = stops.get(key);
+      if (!entry) {
+        entry = {
+          lat: stop.lat, lon: stop.lon, name: stop.name || '未命名站點', routes: new Map()
+        };
+        stops.set(key, entry);
+      }
+      entry.routes.set(routeKey(route) + ':' + String(stop.direction), { route, station: stop });
+    }
+  }
+  for (const stop of stops.values()) {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 3.5, color: '#176b55', weight: 1, fillColor: '#fff', fillOpacity: .95, interactive: true, bubblingMouseEvents: false
+    }).addTo(routeLayer).bindTooltip(stopTooltip(stop), {
+      direction: 'top', opacity: .98, className: 'stop-tooltip'
+    });
+    visibleStopMarkers.set(marker, stop);
+  }
+}
+
+function routeIsVisible(r) {
+  return enabled.has(routeKey(r)) && (!nearbyOnly || !nearbyCenter || routeDistance(r, nearbyCenter) <= Number(document.getElementById('radius').value));
+}
+
+function renderList() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const list = routes.filter(r => (area === '全部' || r.area === area) && (!q || (r.no + ' ' + r.name + ' ' + r.area + ' ' + r.stops.join(' ')).toLowerCase().includes(q)));
+  document.getElementById('routeCount').textContent = routes.length;
+  document.getElementById('routeList').innerHTML = list.length ? list.map(r => '<div class="route-card ' + (selected && routeKey(selected) === routeKey(r) ? 'selected' : '') + ' ' + (enabled.has(routeKey(r)) ? '' : 'disabled-route') + '" data-no="' + escapeHtml(routeKey(r)) + '"><input class="route-toggle" type="checkbox" aria-label="顯示 ' + escapeHtml(r.no) + '" title="顯示／隱藏路線" ' + (enabled.has(routeKey(r)) ? 'checked' : '') + '><div class="route-badge">' + escapeHtml(r.no) + '</div><div><div class="route-name">' + escapeHtml(r.description || r.name) + '</div><div class="route-meta">' + escapeHtml(r.routeGroup || r.area) + ' · ' + escapeHtml(r.origin) + ' → ' + escapeHtml(r.dest) + '</div></div><div class="arrow">›</div></div>').join('') : '<div class="empty">找不到符合條件的路線</div>';
+  document.querySelectorAll('.route-card').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.classList.contains('route-toggle')) return;
+      choose(el.dataset.no);
+    });
+    el.querySelector('.route-toggle').addEventListener('change', e => {
+      const key = el.dataset.no;
+      if (e.target.checked) enabled.add(key);
+      else enabled.delete(key);
+      renderList();
+      draw({ fitBounds: false });
+      updateNearbyStatus();
+    });
+  });
+}
+
+function draw(options = {}) {
+  // Keep routes, stops, and the search radius together; bus markers use their own layer.
+  routeLayer.clearLayers();
+  visibleStopMarkers.clear();
+  const toDraw = routes.filter(r => routeIsVisible(r) && routePaths(r).length);
+  if (overlapSourceRoutes !== routes) {
+    const overlapData = buildRouteOverlapData(routes);
+    routeOverlapByPath = overlapData.byRoute;
+    routeOverlapConflicts = overlapData.conflicts;
+    overlapSourceRoutes = routes;
+  }
+  const overlapColors = overlapColorsFor(toDraw, routeOverlapConflicts), visibleByKey = new Map(toDraw.map(route => [routeKey(route), route]));
+  toDraw.forEach(r => {
+    const key = routeKey(r), isSelected = selected && key === routeKey(selected), color = overlapColors.get(key) || (isSelected ? '#176b55' : '#6da185');
+    routePaths(r).forEach((coords, index) => {
+      const line = L.polyline(coords, {
+        color, weight: isSelected ? 6 : 3, opacity: isSelected ? 1 : .78, dashArray: null
+      }).addTo(routeLayer);
+      let currentTooltip = routeInfoTooltip([{
+        route: r, pathIndex: index
+      }]);
+      line.bindTooltip(currentTooltip, {
+        sticky: true, direction: 'top', opacity: .98, className: 'route-tooltip'
+      });
+      const updateTooltip = event => {
+        const along = distanceAlongRoutePath(coords, event.latlng), intervals = (routeOverlapByPath.get(key) || new Map()).get(index) || [], entries = [{
+          route: r, pathIndex: index
+        }], included = new Set([key]);
+        for (const interval of intervals) {
+          if (along < interval.start || along > interval.end || included.has(interval.otherKey)) continue;
+          const overlappingRoute = visibleByKey.get(interval.otherKey);
+          if (overlappingRoute) {
+            included.add(interval.otherKey);
+            entries.push({
+              route: overlappingRoute, pathIndex: interval.otherPathIndex
+            });
+          }
+        }
+        entries.sort((a, b) => a.route.no.localeCompare(b.route.no, 'zh-Hant', {
+          numeric: true
+        }));
+        const tooltip = routeInfoTooltip(entries);
+        if (tooltip !== currentTooltip) {
+          currentTooltip = tooltip;
+          line.setTooltipContent(tooltip);
+        }
+      };
+      line.on('mouseover', updateTooltip);
+      line.on('mousemove', updateTooltip);
+      line.on('click', () => choose(key));
+    });
+  });
+  addVisibleStopMarkers(toDraw);
+  if (locationMarker) locationMarker.remove();
+  if (locationAccuracyCircle) locationAccuracyCircle.remove();
+  if (nearbyCenter) {
+    locationMarker = L.marker(nearbyCenter).addTo(map).bindPopup(escapeHtml(nearbyLabel) + (nearbyAccuracy ? ' · 定位誤差約 ±' + Math.round(nearbyAccuracy) + ' 公尺' : ''));
+    if (nearbyAccuracy > 0) locationAccuracyCircle = L.circle(nearbyCenter, {
+      radius: nearbyAccuracy, color: '#4e78a0', weight: 1, dashArray: '3 5', fillColor: '#7aa8d1', fillOpacity: .08, interactive: false
+    }).addTo(map);
+  }
+  if (nearbyOnly && nearbyCenter) L.circle(nearbyCenter, {
+    radius: Number(document.getElementById('radius').value) * 1000, color: '#7d9d35', weight: 1, dashArray: '4 5', fillColor: '#c9e58a', fillOpacity: .12, interactive: false
+  }).addTo(routeLayer);
+  const points = toDraw.flatMap(route => routePaths(route).flat());
+  if (nearbyOnly && nearbyCenter) points.push(nearbyCenter);
+  if (options.fitBounds !== false) {
+    if (points.length) map.fitBounds(L.latLngBounds(points).pad(.12), {
+      maxZoom: 13
+    });
+    else if (nearbyCenter) map.setView(nearbyCenter, 12);
+  }
+  // Route toggles and nearby searches all redraw the map, so they refresh bus markers too.
+  refreshLiveVehicles();
+}
+
+function updateNearbyStatus() {
+  const status = document.getElementById('nearbyStatus');
+  if (!nearbyCenter) {
+    status.textContent = '可搜尋地點或使用裝置定位，再顯示官方線型在指定範圍內的路線。';
+    return;
+  }
+  const radius = Number(document.getElementById('radius').value), nearby = routes.filter(r => routeIsVisible(r) && routePaths(r).length), accuracyText = nearbyAccuracy ? '；裝置回報定位誤差約 ±' + (nearbyAccuracy >= 1000 ? (nearbyAccuracy / 1000).toFixed(1) + ' 公里' : Math.round(nearbyAccuracy) + ' 公尺') : '';
+  const approximateText = nearbyApproximate ? '；門牌未能精確匹配，定位點位於道路或巷弄附近' : '';
+  status.textContent = nearbyOnly ? '範圍 ' + radius + ' 公里內顯示並勾選 ' + nearby.length + ' 條官方路線' + accuracyText + approximateText + '。' : '已設定中心位置；按「顯示附近路線」查看 ' + radius + ' 公里內路線' + accuracyText + approximateText + '。';
+}
+
+function choose(id, options = {}) {
+  selected = routes.find(route => routeKey(route) === String(id)) || routes[0] || null;
+  renderList();
+  draw({ fitBounds: options.fitBounds === true });
+  renderDetails();
+}
+
+function renderDetails() {
+  if (!selected) {
+    document.getElementById('detailRoute').textContent = '路線資料載入中…';
+    document.getElementById('detailSub').textContent = '';
+    document.getElementById('stops').innerHTML = '';
+    return;
+  }
+  const selectedStops = selected.stations || [];
+  document.getElementById('detailRoute').textContent = selected.no + '｜' + selected.origin + '－' + selected.dest;
+  document.getElementById('detailSub').textContent = (selected.routeGroup || '桃園市公車') + ' · ' + (selected.description || selected.name) + ' · 官方路線資料';
+  document.getElementById('stopSubtitle').textContent = (selected.stations ? '官方站序 · ' + selectedStops.length + ' 個站點 · 到站預估即時更新' : '官方資料 · ' + (selected.stops || []).length + ' 個站點');
+  document.getElementById('times').innerHTML = '<div class="callout" style="grid-column:1/-1;margin:0">班次不由本頁快取；請至官方系統查詢最新平日／假日時刻與到站預估。</div>';
+  const displayStops = selected.stations ? selectedStops : (selected.stops || []).map(name => ({
+    name: name, direction: ''
+  }));
+  document.getElementById('stops').innerHTML = displayStops.length ? displayStops.map(s => {
+    const dir = Number(s.direction) === 1 ? '去程' : Number(s.direction) === 2 ? '返程' : String(s.direction || '');
+    const order = Number(s.orderNo) > 0 ? ' ' + Number(s.orderNo) : '';
+    const eta = countdownLabel(getStopEstimate(selected, s));
+    return '<div class="stop"><i class="stop-pin"></i><span>' + escapeHtml(s.name) + '<small class="stop-eta">' + escapeHtml(eta) + '</small></span><small>' + escapeHtml(dir + order) + '</small></div>';
+  }).join('') : '<div class="callout">官方路線資料未提供站序。</div>';
+}
+
+function stopPositionWatch() {
+  if (positionWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(positionWatchId);
+  positionWatchId = null;
+  if (positionWaitTimer !== null) clearTimeout(positionWaitTimer);
+  positionWaitTimer = null;
+}
+
+function useCurrentPosition() {
+  const status = document.getElementById('nearbyStatus');
+  if (!navigator.geolocation) {
+    status.textContent = '此瀏覽器不支援定位，請改用地點搜尋。';
+    return;
+  }
+  geocodeSearchId++;
+  const results = document.getElementById('locationResults');
+  results.hidden = true;
+  results.innerHTML = '';
+  const requestId = ++positionRequestId;
+  stopPositionWatch();
+  let bestFix = null, finished = false;
+  status.textContent = '正在取得新的高精度位置…';
+  const finish = message => {
+    if (finished || requestId !== positionRequestId) return;
+    finished = true;
+    stopPositionWatch();
+    if (bestFix) {
+      const accuracy = Number(bestFix.coords.accuracy);
+      setNearby([bestFix.coords.latitude, bestFix.coords.longitude], '我的位置', Number.isFinite(accuracy) ? accuracy : null);
+      if (accuracy > 1000) status.textContent += ' 目前定位精度較低，建議改用地址搜尋確認位置。';
+    }
+    else status.textContent = message;
+  };
+  try {
+    positionWatchId = navigator.geolocation.watchPosition(position => {
+      if (finished || requestId !== positionRequestId) return;
+      const accuracy = Number(position.coords.accuracy);
+      if (!bestFix || accuracy < Number(bestFix.coords.accuracy)) bestFix = position;
+      status.textContent = '正在確認定位精度…目前誤差約 ±' + (accuracy >= 1000 ? (accuracy / 1000).toFixed(1) + ' 公里' : Math.round(accuracy) + ' 公尺');
+      if (accuracy <= 50) finish();
+    }, error => {
+      const message = error.code === 1 ? '定位權限被拒絕，請允許此網站使用位置或改用地點搜尋。' : error.code === 3 ? '取得位置逾時，請檢查裝置定位服務或改用地點搜尋。' : '裝置無法提供位置，請檢查定位服務或改用地點搜尋。';
+      finish(message);
+    }, {
+      enableHighAccuracy: true, timeout: 20000, maximumAge: 0
+    });
+    positionWaitTimer = setTimeout(() => finish('定位逾時，裝置未回傳有效位置，請改用地點搜尋。'), 18000);
+  }
+  catch (error) {
+    finish('無法啟動裝置定位，請改用地點搜尋。');
+  }
+}
+
+document.getElementById('search').addEventListener('input', renderList);
+document.querySelectorAll('.filter').forEach(b => b.addEventListener('click', () => {
+  area = b.dataset.area;
+  document.querySelectorAll('.filter').forEach(x => x.classList.toggle('active', x === b));
+  renderList();
+}));
+document.querySelectorAll('.sched-tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.sched-tab').forEach(x => x.classList.toggle('active', x === b));
+  renderDetails();
+}));
+document.getElementById('allRoutes').addEventListener('click', () => {
+  nearbyOnly = false;
+  selected = null;
+  enabled.clear();
+  routes.forEach(r => enabled.add(routeKey(r)));
+  renderList();
+  draw();
+  updateNearbyStatus();
+  document.getElementById('detailRoute').textContent = '桃小巴｜路線總覽';
+  document.getElementById('detailSub').textContent = '已顯示所有已啟用路線';
+  document.getElementById('times').innerHTML = '<div class="callout" style="grid-column:1/-1;margin:0">選擇個別路線以查看官方站序；實際班次請至官方系統核對。</div>';
+  document.getElementById('stops').innerHTML = '';
+});
+document.getElementById('clearRoutes').addEventListener('click', () => {
+  enabled.clear();
+  renderList();
+  draw();
+  updateNearbyStatus();
+});
+document.getElementById('searchLocation').addEventListener('click', searchLocation);
+document.getElementById('locationQuery').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchLocation();
+});
+document.getElementById('nearMe').addEventListener('click', useCurrentPosition);
+document.getElementById('nearbyRoutes').addEventListener('click', () => {
+  if (!nearbyCenter) {
+    document.getElementById('nearbyStatus').textContent = '請先搜尋地點或使用我的位置。';
+    return;
+  }
+  nearbyOnly = true;
+  selected = null;
+  syncNearbySelection();
+  draw();
+  renderList();
+  updateNearbyStatus();
+});
+document.getElementById('radius').addEventListener('change', () => {
+  if (nearbyCenter && nearbyOnly) {
+    syncNearbySelection();
+    draw();
+    renderList();
+  }
+  updateNearbyStatus();
+});
+startLiveLoad();
+// Keep vehicle positions fresh while the page is open.
+window.setInterval(refreshLiveVehicles, vehicleRefreshIntervalMs);
+</script>
+</body>
+</html>
