@@ -1,0 +1,42 @@
+name: Refresh official 桃小巴 data
+
+on:
+  # 02:17 each day in Asia/Taipei (GitHub cron is UTC).
+  schedule:
+    - cron: '17 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-official-transit-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download routes and schedules
+        run: node scripts/update-transit-data.mjs
+
+      - name: Commit refreshed data
+        run: |
+          git add official-transit-data.json
+          if git diff --cached --quiet; then
+            echo "Official transit data is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh official 桃小巴 data"
+          git push
